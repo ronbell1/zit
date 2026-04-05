@@ -1450,7 +1450,7 @@ impl App {
                 } => {
                     let status = if *success { "OK" } else { "FAILED" };
                     parts.push(format!(
-                        "[TOOL_RESULT] git {} ({})\n{}",
+                        "[TOOL_RESULT] {} ({}):\n{}",
                         command, status, output
                     ));
                 }
