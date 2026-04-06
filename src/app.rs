@@ -1480,12 +1480,7 @@ impl App {
 
         // Determine if this is a git command or a file-reading command
         let is_git = !args.is_empty() && args[0] == "git";
-        let label = if is_git {
-            format!("git {}", args[1..].join(" "))
-        } else {
-            cmd_str.clone()
-        };
-        self.agent_state.executing_label = Some(label);
+        self.agent_state.executing_label = Some(cmd_str.clone());
 
         let args_str: Vec<String> = args.clone();
         let (tx, rx) = mpsc::channel();
@@ -1532,13 +1527,6 @@ impl App {
                     self.agent_state.command_receiver = None;
                     self.agent_state.executing_label = None;
 
-                    let output_preview = output
-                        .lines()
-                        .next()
-                        .unwrap_or("")
-                        .chars()
-                        .take(100)
-                        .collect();
 
                     self.agent_state.messages.push(agent::AgentMessage {
                         role: agent::MessageRole::ToolUse {
@@ -1551,15 +1539,8 @@ impl App {
                     });
                     self.agent_state.dirty = true;
 
-                    // Show proceed/revise/stop prompt
-                    self.agent_state.tool_result_prompt = Some(agent::ToolResultPrompt {
-                        tool_name: format!(
-                            "{} {}",
-                            if cmd_str.starts_with("git ") { "" } else { "" },
-                            cmd_str
-                        ),
-                        output_preview,
-                    });
+                    // Auto-continue: process next tool or re-send to AI
+                    self.process_agent_next_tool();
                 }
                 Err(mpsc::TryRecvError::Disconnected) => {
                     self.agent_state.command_executing = false;
